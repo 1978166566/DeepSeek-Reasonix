@@ -4,7 +4,8 @@ export type ThemeName =
   | "light"
   | "tokyo-night"
   | "github-dark"
-  | "github-light";
+  | "github-light"
+  | "high-contrast";
 
 export interface ThemeTokens {
   fg: {
@@ -250,6 +251,40 @@ const githubLight = defineTheme({
   },
 });
 
+const highContrast = defineTheme({
+  fg: {
+    strong: "#ffffff",
+    body: "#f5f5f5",
+    sub: "#d4d4d4",
+    meta: "#bdbdbd",
+    faint: "#8a8a8a",
+  },
+  tone: {
+    brand: "#00e5ff",
+    accent: "#ff4dff",
+    violet: "#b388ff",
+    ok: "#00ff66",
+    warn: "#ffdd00",
+    err: "#ff4d4d",
+    info: "#4da3ff",
+  },
+  toneActive: {
+    brand: "#80f2ff",
+    accent: "#ff99ff",
+    violet: "#d0b3ff",
+    ok: "#80ffb3",
+    warn: "#ffee80",
+    err: "#ff9999",
+    info: "#99c9ff",
+  },
+  surface: {
+    bg: "#000000",
+    bgInput: "#0a0a0a",
+    bgCode: "#050505",
+    bgElev: "#141414",
+  },
+});
+
 export const THEMES = {
   default: githubDark,
   dark,
@@ -257,6 +292,7 @@ export const THEMES = {
   "tokyo-night": tokyoNight,
   "github-dark": githubDark,
   "github-light": githubLight,
+  "high-contrast": highContrast,
 } as const satisfies Record<ThemeName, ThemeTokens>;
 
 export const DEFAULT_THEME_NAME: ThemeName = "default";

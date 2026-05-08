@@ -25,6 +25,7 @@ describe("theme tokens", () => {
       "tokyo-night",
       "github-dark",
       "github-light",
+      "high-contrast",
     ]);
   });
 
