@@ -18,7 +18,7 @@ import {
 
 import { ContextManager } from "./context-manager.js";
 import { summarizeBranch } from "./loop/branch.js";
-import { formatLoopError } from "./loop/errors.js";
+import { formatLoopError, is5xxError, probeDeepSeekReachable } from "./loop/errors.js";
 import {
   NEEDS_PRO_BUFFER_CHARS,
   isEscalationRequest,
@@ -953,11 +953,12 @@ export class CacheFirstLoop {
           this._turnAbort = new AbortController();
           return;
         }
+        const probe = is5xxError(err) ? await probeDeepSeekReachable(this.client) : undefined;
         yield {
           turn: this._turn,
           role: "error",
           content: "",
-          error: formatLoopError(err as Error),
+          error: formatLoopError(err as Error, probe),
         };
         return;
       }

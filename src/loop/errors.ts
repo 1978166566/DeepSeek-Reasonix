@@ -1,5 +1,10 @@
-/** Single text-layer DeepSeek-error formatter — 429/5xx never reach here (retry.ts swallows). */
-export function formatLoopError(err: Error): string {
+import type { DeepSeekClient } from "../client.js";
+
+export interface DeepSeekProbeResult {
+  reachable: boolean;
+}
+
+export function formatLoopError(err: Error, probe?: DeepSeekProbeResult): string {
   const msg = err.message ?? "";
   if (msg.includes("maximum context length")) {
     const reqMatch = msg.match(/requested\s+(\d+)\s+tokens/);
@@ -27,7 +32,43 @@ export function formatLoopError(err: Error): string {
   if (status === "400") {
     return `Bad request (DeepSeek 400): ${inner}`;
   }
+  if (is5xxStatus(status)) {
+    return formatDeepSeek5xx(status, probe);
+  }
   return msg;
+}
+
+export function is5xxError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const m = /^DeepSeek (5\d{2}):/.exec(err.message ?? "");
+  return m !== null;
+}
+
+export async function probeDeepSeekReachable(
+  client: DeepSeekClient,
+  timeoutMs = 1500,
+): Promise<DeepSeekProbeResult> {
+  const balance = await client.getBalance({ signal: AbortSignal.timeout(timeoutMs) });
+  return { reachable: balance !== null };
+}
+
+function is5xxStatus(status: string): boolean {
+  return status === "500" || status === "502" || status === "503" || status === "504";
+}
+
+function formatDeepSeek5xx(status: string, probe?: DeepSeekProbeResult): string {
+  const head = `DeepSeek service unavailable (${status}) — this is a DeepSeek-side problem, not Reasonix. Already retried 4× with backoff.`;
+  const probeNote =
+    probe === undefined
+      ? ""
+      : probe.reachable
+        ? " DeepSeek's main API answered our health check, but /chat/completions is failing — partial outage on their side."
+        : " DeepSeek API is unreachable from your network — could be a wider DS outage or a local network issue.";
+  const action =
+    probe?.reachable === false
+      ? " Try: (1) check your network, (2) wait 30s and retry, (3) status page: https://status.deepseek.com."
+      : " Try: (1) wait 30s and retry, (2) /preset to switch model, (3) status page: https://status.deepseek.com.";
+  return `${head}${probeNote}${action}`;
 }
 
 export function reasonPrefixFor(

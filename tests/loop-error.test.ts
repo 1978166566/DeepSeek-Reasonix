@@ -77,11 +77,44 @@ describe("formatLoopError", () => {
     expect(out).toMatch(/131k/);
   });
 
-  it("tolerates an empty or malformed JSON body on the error payload", () => {
-    const raw = new Error("DeepSeek 500: ");
+  it("503 with no probe → DS-side outage notice + retry hint, no probe-specific line", () => {
+    const raw = new Error('DeepSeek 503: {"error":{"message":"Service unavailable"}}');
     const out = formatLoopError(raw);
-    // 500 isn't in the remapped set, so it passes through as-is
-    expect(out).toBe("DeepSeek 500: ");
+    expect(out).toMatch(/service unavailable \(503\)/);
+    expect(out).toMatch(/DeepSeek-side problem, not Reasonix/);
+    expect(out).toMatch(/Already retried 4×/);
+    expect(out).toMatch(/status\.deepseek\.com/);
+    expect(out).not.toMatch(/main API answered/);
+    expect(out).not.toMatch(/unreachable from your network/);
+  });
+
+  it("503 with reachable probe → tells user DS chat endpoint is sick but main API is up", () => {
+    const raw = new Error("DeepSeek 503: ");
+    const out = formatLoopError(raw, { reachable: true });
+    expect(out).toMatch(/main API answered our health check/);
+    expect(out).toMatch(/partial outage on their side/);
+    expect(out).not.toMatch(/check your network/);
+  });
+
+  it("503 with unreachable probe → tells user DS or their network is down, network-first hint", () => {
+    const raw = new Error("DeepSeek 503: ");
+    const out = formatLoopError(raw, { reachable: false });
+    expect(out).toMatch(/unreachable from your network/);
+    expect(out).toMatch(/check your network/);
+    expect(out).not.toMatch(/main API answered/);
+  });
+
+  it("500/502/504 also remap to the DS-side outage notice", () => {
+    for (const status of [500, 502, 504]) {
+      const out = formatLoopError(new Error(`DeepSeek ${status}: `));
+      expect(out).toMatch(new RegExp(`service unavailable \\(${status}\\)`));
+      expect(out).toMatch(/DeepSeek-side problem/);
+    }
+  });
+
+  it("tolerates an empty body on a 5xx — still produces the outage notice", () => {
+    const out = formatLoopError(new Error("DeepSeek 500: "));
+    expect(out).toMatch(/service unavailable \(500\)/);
   });
 });
 
