@@ -1,13 +1,7 @@
 /**
  * define_tool — 让 AI 在会话中实时注册新的 function calling 工具。
- *
- * 工作原理：
- * 1. AI 调用 define_tool(name, description, parameters, handler)
- * 2. 在 ToolRegistry 注册一个新工具，fn 是启动 subagent 执行 handler
- * 3. 在 ImmutablePrefix 也注册该工具（下一轮 DeepSeek API 请求就能看到）
- * 4. 下一轮 AI 可以像调用任何内置工具一样调用刚定义的工具
- *
- * 每个新工具都会引起一次 prefix cache miss，但后续调用走缓存。
+ * 工作原理：AI 调用 define_tool 定义新工具，注册后在下一轮可直接调用。
+ * 工具 handler 以 subagent 方式执行，无需 MCP 外部进程。
  */
 
 import type { ImmutablePrefix } from "../memory/runtime.js";
