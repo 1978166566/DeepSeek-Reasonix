@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { applyMemoryStack } from "../memory/user.js";
 import { readProjectMap } from "../tools/project-map.js";
+import { loadProjectRules, formatRulesAsPrompt } from "../tools/project-tools.js";
 import { AUTO_SKILL_CREATION_PROMPT } from "../tools/project-map.js";
 import { TUI_FORMATTING_RULES, escalationContract } from "../prompt-fragments.js";
 
@@ -295,6 +296,11 @@ export function codeSystemPrompt(rootDir: string, opts: CodeSystemPromptOptions 
   }
   // Inject auto skill creation prompt
   result = `${result}\n${AUTO_SKILL_CREATION_PROMPT}`;
+  // Inject project rules if any exist
+  const rules = loadProjectRules(rootDir);
+  if (rules.length > 0) {
+    result = `${result}\n${formatRulesAsPrompt(rules)}`;
+  }
   const appendParts = [opts.systemAppend, opts.systemAppendFile].filter(Boolean);
   if (appendParts.length > 0) {
     result = `${result}\n\n# User System Append\n\n${appendParts.join("\n\n")}`;

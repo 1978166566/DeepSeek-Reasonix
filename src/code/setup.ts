@@ -16,6 +16,7 @@ import { registerFilesystemTools } from "../tools/filesystem.js";
 import { registerLintRepairTool } from "../tools/project-map.js";
 import { registerReflectTool } from "../tools/self-improve.js";
 import { registerBrowserTools } from "../tools/browser.js";
+import { registerProjectTools } from "../tools/project-tools.js";
 import { SkillStore } from "../skills.js";
 import { JobRegistry } from "../tools/jobs.js";
 import { registerMemoryTools } from "../tools/memory.js";
@@ -147,6 +148,7 @@ export async function buildCodeToolset(opts: CodeToolsetOpts): Promise<CodeTools
     projectRoot: opts.rootDir,
   });
   registerBrowserTools(tools, { projectRoot: opts.rootDir });
+  registerProjectTools(tools, { projectRoot: opts.rootDir });
   if (searchEnabled()) {
     registerWebTools(tools, {
       webSearchEngine: webSearchEngine(),
