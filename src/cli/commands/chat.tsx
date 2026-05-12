@@ -355,15 +355,9 @@ export interface ChatOptions {
   codeMode?: {
     rootDir: string;
     jobs?: import("../../tools/jobs.js").JobRegistry;
-    /**
-     * `/cwd <path>` callback — re-registers every rootDir-dependent
-     * native tool against the new path. Optional so embedders that
-     * don't want live cwd switching can omit it (the slash command
-     * then falls back to non-tool updates only).
-     */
     reregisterTools?: (rootDir: string) => void;
-    /** Async tail of `/cwd` — re-probe the new dir for a semantic index. */
     reBootstrapSemantic?: (rootDir: string) => Promise<{ enabled: boolean }>;
+    prefixRef?: { current: import("../../memory/runtime.js").ImmutablePrefix | null };
   };
   /** Skip the session picker — assume "Resume" (backwards-compatible auto-continue). */
   forceResume?: boolean;

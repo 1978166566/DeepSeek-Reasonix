@@ -246,6 +246,8 @@ export interface AppProps {
      * isn't blocked on disk I/O.
      */
     reBootstrapSemantic?: (rootDir: string) => Promise<{ enabled: boolean }>;
+    /** Filled by buildCodeToolset, set by App.tsx after creating ImmutablePrefix. Used by define_tool for hot-add. */
+    prefixRef?: { current: import("../../memory/runtime.js").ImmutablePrefix | null };
   };
   /**
    * When `true`, suppress the auto-launch of the embedded web dashboard
@@ -850,6 +852,8 @@ function AppInner({
       system,
       toolSpecs: tools?.specs(),
     });
+    // Bridge the prefix ref so define_tool can hot-add tool specs mid-session
+    if (codeMode?.prefixRef) codeMode.prefixRef.current = prefix;
     const l = new CacheFirstLoop({
       client,
       prefix,

@@ -10,6 +10,7 @@ import {
 import { bootstrapSemanticSearchInCodeMode } from "../index/semantic/tool.js";
 import { ToolRegistry } from "../tools.js";
 import { registerChoiceTool } from "../tools/choice.js";
+import { registerDefineTool } from "../tools/custom-tools.js";
 import { registerFilesystemTools } from "../tools/filesystem.js";
 import { JobRegistry } from "../tools/jobs.js";
 import { registerMemoryTools } from "../tools/memory.js";
@@ -31,11 +32,16 @@ export interface CodeToolset {
   registerRooted: (root: string) => void;
   reBootstrapSemantic: (root: string) => Promise<{ enabled: boolean }>;
   semantic: { enabled: boolean };
+  /** Mutable ref — set by App.tsx after creating the ImmutablePrefix. Used by define_tool to hot-add tool specs. */
+  prefixRef: { current: import("../memory/runtime.js").ImmutablePrefix | null };
 }
 
 export async function buildCodeToolset(opts: CodeToolsetOpts): Promise<CodeToolset> {
   const tools = new ToolRegistry();
   const jobs = new JobRegistry();
+  const prefixRef: { current: import("../memory/runtime.js").ImmutablePrefix | null } = {
+    current: null,
+  };
 
   const registerRooted = (root: string): void => {
     registerFilesystemTools(tools, { rootDir: root });
@@ -59,6 +65,20 @@ export async function buildCodeToolset(opts: CodeToolsetOpts): Promise<CodeTools
   registerChoiceTool(tools);
   registerTodoTool(tools);
   registerScaffoldTools(tools, { projectRoot: opts.rootDir });
+  registerDefineTool(tools, {
+    subagentRunner: async (system, task, signal) => {
+      if (!subagentClient) subagentClient = new DeepSeekClient({ baseUrl: loadBaseUrl() });
+      const result = await spawnSubagent({
+        client: subagentClient,
+        parentRegistry: tools,
+        parentSignal: signal,
+        system,
+        task,
+      });
+      return formatSubagentResult(result);
+    },
+    getPrefix: () => prefixRef.current,
+  });
   if (searchEnabled()) {
     registerWebTools(tools, {
       webSearchEngine: webSearchEngine(),
@@ -89,5 +109,5 @@ export async function buildCodeToolset(opts: CodeToolsetOpts): Promise<CodeTools
 
   const semantic = await reBootstrapSemantic(opts.rootDir);
 
-  return { tools, jobs, registerRooted, reBootstrapSemantic, semantic };
+  return { tools, jobs, registerRooted, reBootstrapSemantic, semantic, prefixRef };
 }
