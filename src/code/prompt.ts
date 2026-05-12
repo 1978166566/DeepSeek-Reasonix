@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { applyMemoryStack } from "../memory/user.js";
+import { readProjectMap } from "../tools/project-map.js";
+import { AUTO_SKILL_CREATION_PROMPT } from "../tools/project-map.js";
 import { TUI_FORMATTING_RULES, escalationContract } from "../prompt-fragments.js";
 
 const DEFAULT_CODE_MODEL = "deepseek-v4-flash";
@@ -286,6 +288,13 @@ export function codeSystemPrompt(rootDir: string, opts: CodeSystemPromptOptions 
       result = `${result}\n\n# Project .gitignore\n\nThe user's repo ships this .gitignore — treat every pattern as "don't traverse or edit inside these paths unless explicitly asked":\n\n\`\`\`\n${truncated}\n\`\`\`\n`;
     }
   }
+  // Inject project map if available
+  const projectMap = readProjectMap(rootDir);
+  if (projectMap) {
+    result = `${result}\n\n# Project Map\n\n${projectMap}\n`;
+  }
+  // Inject auto skill creation prompt
+  result = `${result}\n${AUTO_SKILL_CREATION_PROMPT}`;
   const appendParts = [opts.systemAppend, opts.systemAppendFile].filter(Boolean);
   if (appendParts.length > 0) {
     result = `${result}\n\n# User System Append\n\n${appendParts.join("\n\n")}`;

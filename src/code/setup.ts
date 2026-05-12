@@ -13,6 +13,7 @@ import { registerChoiceTool } from "../tools/choice.js";
 import { registerDefineTool } from "../tools/custom-tools.js";
 import { registerArchitectTools } from "../tools/architect.js";
 import { registerFilesystemTools } from "../tools/filesystem.js";
+import { registerLintRepairTool } from "../tools/project-map.js";
 import { JobRegistry } from "../tools/jobs.js";
 import { registerMemoryTools } from "../tools/memory.js";
 import { registerPlanTool } from "../tools/plan.js";
@@ -95,6 +96,37 @@ export async function buildCodeToolset(opts: CodeToolsetOpts): Promise<CodeTools
     },
     formatResult: formatSubagentResult,
     getPrefix: () => prefixRef.current,
+  });
+  registerLintRepairTool(tools, {
+    projectRoot: opts.rootDir,
+    runCommand: async (cmd) => {
+      const { execSync } = await import("node:child_process");
+      try {
+        const stdout = execSync(cmd, {
+          cwd: opts.rootDir,
+          timeout: 120_000,
+          encoding: "utf8",
+          maxBuffer: 10 * 1024 * 1024,
+        });
+        return { output: stdout, exitCode: 0 };
+      } catch (e: any) {
+        return {
+          output: e.stdout ?? "",
+          exitCode: e.status ?? 1,
+        };
+      }
+    },
+    spawnFixSubagent: async (task, signal) => {
+      if (!subagentClient) subagentClient = new DeepSeekClient({ baseUrl: loadBaseUrl() });
+      return spawnSubagent({
+        client: subagentClient,
+        parentRegistry: tools,
+        parentSignal: signal,
+        system: "",
+        task,
+      });
+    },
+    formatResult: formatSubagentResult,
   });
   if (searchEnabled()) {
     registerWebTools(tools, {
