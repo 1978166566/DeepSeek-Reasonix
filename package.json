@@ -74,6 +74,7 @@
     "ignore": "^7.0.5",
     "ink": "^7.0.2",
     "ink-text-input": "^6.0.0",
+    "langfuse": "^3.38.20",
     "node-html-parser": "^7.1.0",
     "picomatch": "^4.0.4",
     "puppeteer": "^25.0.0",

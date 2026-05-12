@@ -17,6 +17,10 @@ import { registerLintRepairTool } from "../tools/project-map.js";
 import { registerReflectTool } from "../tools/self-improve.js";
 import { registerBrowserTools } from "../tools/browser.js";
 import { registerProjectTools } from "../tools/project-tools.js";
+import { registerBackgroundTools } from "../tools/background.js";
+import { registerVoiceTools } from "../tools/voice.js";
+import { registerGatewayTools } from "../tools/gateway.js";
+import { initSession } from "../tools/observability.js";
 import { SkillStore } from "../skills.js";
 import { JobRegistry } from "../tools/jobs.js";
 import { registerMemoryTools } from "../tools/memory.js";
@@ -149,6 +153,9 @@ export async function buildCodeToolset(opts: CodeToolsetOpts): Promise<CodeTools
   });
   registerBrowserTools(tools, { projectRoot: opts.rootDir });
   registerProjectTools(tools, { projectRoot: opts.rootDir });
+  registerBackgroundTools(tools, { jobs });
+  registerVoiceTools(tools);
+  registerGatewayTools(tools, { projectRoot: opts.rootDir });
   if (searchEnabled()) {
     registerWebTools(tools, {
       webSearchEngine: webSearchEngine(),
