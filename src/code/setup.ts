@@ -20,6 +20,7 @@ import { registerProjectTools } from "../tools/project-tools.js";
 import { registerBackgroundTools } from "../tools/background.js";
 import { registerVoiceTools } from "../tools/voice.js";
 import { registerGatewayTools } from "../tools/gateway.js";
+import { registerWorkflowTools } from "../tools/workflow.js";
 import { initSession } from "../tools/observability.js";
 import { SkillStore } from "../skills.js";
 import { JobRegistry } from "../tools/jobs.js";
@@ -156,6 +157,20 @@ export async function buildCodeToolset(opts: CodeToolsetOpts): Promise<CodeTools
   registerBackgroundTools(tools, { jobs });
   registerVoiceTools(tools);
   registerGatewayTools(tools, { projectRoot: opts.rootDir });
+  registerWorkflowTools(tools, {
+    projectRoot: opts.rootDir,
+    spawnSubagent: async (sopts) => {
+      if (!subagentClient) subagentClient = new DeepSeekClient({ baseUrl: loadBaseUrl() });
+      return spawnSubagent({
+        client: subagentClient,
+        parentRegistry: tools,
+        parentSignal: sopts.signal,
+        system: sopts.system,
+        task: sopts.task,
+      });
+    },
+    formatResult: formatSubagentResult,
+  });
   if (searchEnabled()) {
     registerWebTools(tools, {
       webSearchEngine: webSearchEngine(),
