@@ -11,6 +11,7 @@ import { bootstrapSemanticSearchInCodeMode } from "../index/semantic/tool.js";
 import { ToolRegistry } from "../tools.js";
 import { registerChoiceTool } from "../tools/choice.js";
 import { registerDefineTool } from "../tools/custom-tools.js";
+import { registerArchitectTools } from "../tools/architect.js";
 import { registerFilesystemTools } from "../tools/filesystem.js";
 import { JobRegistry } from "../tools/jobs.js";
 import { registerMemoryTools } from "../tools/memory.js";
@@ -77,6 +78,22 @@ export async function buildCodeToolset(opts: CodeToolsetOpts): Promise<CodeTools
       });
       return formatSubagentResult(result);
     },
+    getPrefix: () => prefixRef.current,
+  });
+  registerArchitectTools(tools, {
+    spawnSubagent: async (sopts) => {
+      if (!subagentClient) subagentClient = new DeepSeekClient({ baseUrl: loadBaseUrl() });
+      return spawnSubagent({
+        client: subagentClient,
+        parentRegistry: tools,
+        parentSignal: sopts.signal,
+        system: sopts.system,
+        task: sopts.task,
+        model: sopts.model,
+        allowedTools: sopts.allowedTools,
+      });
+    },
+    formatResult: formatSubagentResult,
     getPrefix: () => prefixRef.current,
   });
   if (searchEnabled()) {
