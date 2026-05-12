@@ -14,6 +14,8 @@ import { registerDefineTool } from "../tools/custom-tools.js";
 import { registerArchitectTools } from "../tools/architect.js";
 import { registerFilesystemTools } from "../tools/filesystem.js";
 import { registerLintRepairTool } from "../tools/project-map.js";
+import { registerReflectTool } from "../tools/self-improve.js";
+import { SkillStore } from "../skills.js";
 import { JobRegistry } from "../tools/jobs.js";
 import { registerMemoryTools } from "../tools/memory.js";
 import { registerPlanTool } from "../tools/plan.js";
@@ -127,6 +129,21 @@ export async function buildCodeToolset(opts: CodeToolsetOpts): Promise<CodeTools
       });
     },
     formatResult: formatSubagentResult,
+  });
+  registerReflectTool(tools, {
+    spawnReflectSubagent: async (task, signal) => {
+      if (!subagentClient) subagentClient = new DeepSeekClient({ baseUrl: loadBaseUrl() });
+      return spawnSubagent({
+        client: subagentClient,
+        parentRegistry: tools,
+        parentSignal: signal,
+        system: "",
+        task,
+      });
+    },
+    formatResult: formatSubagentResult,
+    skillStore: new SkillStore({ projectRoot: opts.rootDir }),
+    projectRoot: opts.rootDir,
   });
   if (searchEnabled()) {
     registerWebTools(tools, {
