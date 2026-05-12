@@ -23,6 +23,7 @@ import { registerGatewayTools } from "../tools/gateway.js";
 import { registerWorkflowTools } from "../tools/workflow.js";
 import { registerChromeTools } from "../tools/chrome-extension.js";
 import { registerSandboxTools } from "../tools/sandbox.js";
+import { registerPublishTools } from "../tools/publish-h5.js";
 import { initSession } from "../tools/observability.js";
 import { SkillStore } from "../skills.js";
 import { JobRegistry } from "../tools/jobs.js";
@@ -175,6 +176,7 @@ export async function buildCodeToolset(opts: CodeToolsetOpts): Promise<CodeTools
   });
   registerChromeTools(tools);
   registerSandboxTools(tools);
+  registerPublishTools(tools);
   if (searchEnabled()) {
     registerWebTools(tools, {
       webSearchEngine: webSearchEngine(),
